@@ -2,27 +2,23 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-char operator[15] = "+-*/(){}<>&=[],";
+char operator[16] = "+-*/(){}<>&=[],;";
 char keyword[32][12] = {"auto", "break", "case", "char", "const", "continue", "default", "do", 
-		"double", "else", "enum", "extern", "float", "for", " goto", "if",
-		"int", "long","register", "return", "short", "signed", "sizeof", "static", 
-		"struct", "switch", "typedef", "union", "unsigned", "void", "volatile", "while"};
+	"double", "else", "enum", "extern", "float", "for", " goto", "if",
+	"int", "long","register", "return", "short", "signed", "sizeof", "static", 
+	"struct", "switch", "typedef", "union", "unsigned", "void", "volatile", "while"};
 char format_specifier[8][3] = {"%d", "%f", "%s", "%c", "%ld", "%x", "%o", "%i"};
 
 void preprocessor(char *buffer, int size);
 int keyword_checking(char*buffer);
-char* operator_checking(char*buffer);
+char operator_checking(char*buffer);
 
 int main(int argc, char *argv[])
 {
-	int i = 0, ch, dist;
+	int i = 0, ch, dist, dist1;
 	FILE *fp1, *fp;
 	char *buffer;
-
-
-
-	//	char operator[15] = "+-*/(){}<>&=[],";
-
+	char word[25];
 
 	if (argc == 1)
 	{
@@ -43,58 +39,85 @@ int main(int argc, char *argv[])
 			fseek(fp1, -(dist + 1), SEEK_CUR);
 			fread(buffer, dist, 1, fp1);
 			//Compare for preprocessor directives
-					if(buffer[0] == '#')
+			if(buffer[0] == '#')
+			{
+				preprocessor(buffer, dist);
+			}
+			else
+			{
+				i = 0;
+				while(i < dist)
+				{
+					char ch = '\0';
+					int k = 0;
+					if(buffer[i] == 34)
 					{
-			preprocessor(buffer, dist);
+						printf("Litteral : ");
+						do
+						{
+						printf("%c", buffer[i]);
+							i++;
+						}while(buffer[i] != 34);
+						printf("%c\n", buffer[i]);
+					}
+					if(buffer[i] == 39)
+					{
+						printf("character constant: ");
+						do
+						{
+						printf("%c", buffer[i]);
+							i++;
+						}while(buffer[i] != 39);
+						printf("%c\n", buffer[i]);
+					}
+
+					while (buffer[i] != ' ' && buffer[i] != '\t' && !(ch = operator_checking(&buffer[i])))
+					{
+						word[k++] = buffer[i++];
+						if(i == dist)
+						{
+							break;
+						}
+					}
+					
+				//	printf("i11\n");
+					//					printf("%s\n", word);
+					if (isdigit(word[0]))
+					{
+						printf("constant : %s \n", word);
+					}
+					else if (isalpha(word[0]))
+					{
+//						printf("Word is %s\n", word);
+						keyword_checking(word);
+					}
+					else if(word[0] == 34)
+					{
+					//	printf("Litteral : %s\n", word);
 					}
 					else
 					{
-						printf("inside else");
-					//	while (buffer[i] != " " || operator_checking(buffer[i]))
-					while(i <= dist)
-						{
-							char *word = malloc(50 * sizeof(char));
-							char *ch = '\0';
-							int j = i;
-							int k = 0;
-
-						while (buffer[i] != ' ' && (ch = operator_checking(&buffer[i])))
-							{ 
-						printf("inside ");
-								word[k++] = buffer[i++];
-							//	j++;
-							//	k++;
-							}
+					//	printf("Character constant : %s\n", word);
+					}
+					if (ch != '\0')
+					{
+						printf("operator : %c \n",ch);
+						ch = '\0';
+					}
+					i++;
+					for(k = 0; k <25; k++)
+					{
 						word[k] = '\0';
-
-						if (isdigit(word[0]))
-						{
-							printf("constant : %s \n", word);
-						}
-						else
-						{
-							keyword_checking(word);
-						}
-
-						if (*ch != '\0')
-						{
-							printf("operator : %s \n",ch);
-						}
-						}
-
 					}
 
-
-
-
-					fseek(fp1,1,SEEK_CUR);
-					//		printf("%s\n", buffer);
-					fseek(fp, dist + 1, SEEK_CUR);
-
-
+//					printf("Word after freeing : %s\n", word);
+				}
+//				printf("Line ended\n");
+			}
+			fseek(fp1,1,SEEK_CUR);
+			//		printf("%s\n", buffer);
+			fseek(fp, dist + 1, SEEK_CUR);
 		}
-
-
 	}
 }
 
@@ -120,12 +143,16 @@ void preprocessor(char *buffer, int size)
 		}
 	}
 }
-int keyword_checking(char*buffer)
+int keyword_checking(char *buffer)
 {
 	for (int i = 0; i < 32; i++)
 	{
-		if (!(strcmp(buffer,&keyword[i][12])))
+		char *key = (char *)malloc(strlen(keyword[i]));;
+		strcpy(key, keyword[i]);
+//		printf("Biuffer is %s  \t key is %s\n", buffer, key);
+		if (strcmp(buffer,key) == 0)
 		{
+//			printf("keyword match\n");
 			printf("Keyword : %s\n", buffer);
 			return 0;
 		}
@@ -133,15 +160,13 @@ int keyword_checking(char*buffer)
 	printf("Identifier: %s\n", buffer);
 	return -1;
 }
-
-
-char* operator_checking(char*buffer)
+char operator_checking(char*buffer)
 {
-	for (int i = 0; i < 15; i++)
+	for (int i = 0; i < 16; i++)
 	{
 		if (*buffer == operator[i])
 		{
-			return buffer;
+			return *buffer;
 		}
 	}
 	return 0;
